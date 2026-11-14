@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,6 +27,48 @@ struct client {
 static int nclients = 0;
 struct client clients[MAX_CLIENTS];
 
+static int is_subscribed(struct client cl, struct topic t){
+	/* Determine if a certain client cl is subscribed to the topic t.
+	 * Handles wildcard '*' meaning 'any topic'
+	 */
+	for (int i=0 ; i<cl.nsubs ; i++){
+		struct topic sub = cl.subs[i];
+		if (strcmp(sub.room, t.room)==0 || strcmp(sub.room, "*")==0){
+			/* Room is subbed */
+			if (strcmp(sub.device, t.device)==0 || strcmp(sub.device, "*")==0){
+				/* Device is subbed */
+				return true;
+			}
+		};
+	}
+	return false;
+}
+
+static int parse_request(char *request, char *method, struct topic *t){
+	/** Parse a PUB or SUB request and store data in topic struct
+	 * and char* method(PUB or SUB)
+	 */
+
+	char topic_line[128];
+	sscanf(request, "%s %s\n", method, topic_line);
+	if(strcmp(method, "PUB")==0){
+		/* Expecting full topic struct with action and options */
+		sscanf(topic_line, "%[^/]/%[^/]/%[^/]/%s", t->room, t->device, t->action, t->options);
+		return 0;
+	}
+	else if (strcmp(method, "SUB")==0) {
+		/* Expecting semi-topic (room and device only) */
+		sscanf(topic_line, "%[^/]/%s", t->room, t->device);
+		return 0;
+	}
+	else if (strcmp(method, "LST")==0) {
+		return 0;
+	}
+
+	return -1; /*Error */
+
+}
+
 /* Event handler for broker TCP conections.
  * On accept, store client with an ID. Send back that ID to synchronize client and broker.
  * On read, check for SUB requests, and update client accordingly.
@@ -40,24 +83,23 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data) {
 			* */
 
 		    printf("[conn %lu] connecté (%d clients)\n", c->id, nclients);
-		   	struct client client = {0};
-			client.id = c->id;
 			if (nclients==MAX_CLIENTS){
 				printf("Refused connection. Max client nb attained.\n");
-				// DISCONNECT !!!
+				// TODO
 			} else {
-				clients[nclients] = client;
+				/* Create client pointer, add it to mg_connection fn_data */
+				struct client *client = calloc(1, sizeof(*client));
+				client->id = c->id;
+				c->fn_data = (struct client*) client;
+
+				clients[nclients] = *client;
 			    nclients++;
 			}
 
 		break;
 
      	case(MG_EV_READ):
-    		/* Receive from client.
-      		* When received, parse the incoming line
-	        * SUB topic/topic/...
-	        * PUB topic/topic/...
-	        */
+    		/* Receive from client.*/
 
 		    for (;;) {
 
@@ -71,14 +113,50 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data) {
 			char *line = (char *) c->recv.buf;
 
 			/* Parse PUB/SUB command and topic */
-			char cmd[3], topic_line[128];
+			char cmd[3];
 			struct topic topic = {0};
+			if (parse_request(line, cmd, &topic)==0){
 
-			sscanf("%s %s\n", cmd, topic_line);
-			if(strcmp(cmd, "PUB")==0){
-				/* Expecting full topic struct with action and options */
+
+				if (strcmp(cmd, "PUB")==0) {
+					/* If PUB, update all subscribed clients
+					 * Iterate mg_mgr connections for clients, test subs, and
+					 * post accordingly
+					 */
+					for (struct mg_connection *con = c->mgr->conns; con != NULL; con = con->next) {
+					    struct client *cl = (struct client *) con->fn_data;
+						/* No PUB to NULL clients and no self-PUB */
+					    if (cl == NULL || c->id == con->id) continue;
+
+						if (is_subscribed(*cl, topic)){
+							mg_printf(con, "%s", line);
+						}
+					}
+				}
+
+				else if (strcmp(cmd, "SUB")==0) {
+					/* If SUB, update client subscribe list.
+					 * Corresponding client struct is pointed at by c->fn_data
+					 * (see accept protocol)
+					 */
+					struct client *cl = (struct client *) c->fn_data;
+					if (cl->nsubs<MAX_SUBS){
+						cl->subs[cl->nsubs] = topic;
+						cl->nsubs++;
+					}
+					// TODO check for double subs to the same topic!
+				}
+
+				else if (strcmp(cmd, "LST")==0) {
+					/* Send back informations about subs */
+					struct client *cl = (struct client *) c->fn_data;
+					for (int i = 0 ; i<cl->nsubs ; i++){
+						mg_printf(c, "Sub : %s/%s\n", cl->subs[i].room, cl->subs[i].device);
+					}
+				}
 
 			}
+
 
 
 			/* Clear recv buffer from used line*/
@@ -94,6 +172,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data) {
 
 	    case(MG_EV_CLOSE):
 			nclients--;
+			free(c->fn_data);
 			printf("[conn %lu] fermé (%d clients)\n", c->id, nclients);
 
 		break;
