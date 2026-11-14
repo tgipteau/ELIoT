@@ -1,147 +1,123 @@
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <poll.h>
+#include "_ressources/mongoose.h"
 
-#define PORT 4242
-#define HOST "192.168.1.190" // Macbook 192.168.1.190
-
-#define BUF_SIZE 64
-#define BACKLOG_SIZE 6
-#define MAX_CONN 32
+#define PORT_URL   "tcp://192.168.1.190:4242"
+#define MAX_LINE   512          // taille maximale d'une ligne acceptée
+#define MAX_SUBS 16
+#define MAX_CLIENTS 64
 
 
-int main(void){
+/* Define topic struct and client struct, storing its subscribed topics. */
+struct topic {
+	char room[32];
+	char device[32];
+	char action[32];
+	char options[32];
+};
 
-	/* Creating the listening socket :
-	 * create IP4 stream socket, define an
-	 * address for the socket, bind them and start listening. */
+struct client {
+	unsigned long id;
+	struct topic subs[MAX_SUBS];
+	int nsubs;
+};
 
-	int sockfd_listen;
-	if ((sockfd_listen = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		perror("Error on socket creation");
-		exit(EXIT_FAILURE);
-    }
-	setsockopt(sockfd_listen, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int));
+static int nclients = 0;
+struct client clients[MAX_CLIENTS];
 
-	struct sockaddr_in address;
-	memset(&address, 0, sizeof(address));
-	address.sin_family = AF_INET;
-    address.sin_port = htons(PORT);
-    if (inet_pton(AF_INET, HOST, &address.sin_addr) <= 0) {
-	    perror("Error on inet_pton (defining address)");
-	   	exit(EXIT_FAILURE);
-    }
+/* Event handler for broker TCP conections.
+ * On accept, store client with an ID. Send back that ID to synchronize client and broker.
+ * On read, check for SUB requests, and update client accordingly.
+ */
+static void ev_handler(struct mg_connection *c, int ev, void *ev_data) {
+    (void) ev_data;
 
-	int status = bind(sockfd_listen, (struct sockaddr *)&address, sizeof(address));
-	if (status!=0) {
-		perror("Error on binding listening socket\n");
-		exit(EXIT_FAILURE);
-	}
+    switch (ev) {
+    	case(MG_EV_ACCEPT):
+	   		/* Store new client.
+			* Send back unique ID.
+			* */
 
-	status = listen(sockfd_listen, BACKLOG_SIZE);
-	if (status!=0) perror("Error on listen call\n");
-	printf("Listening started.\n");
+		    printf("[conn %lu] connecté (%d clients)\n", c->id, nclients);
+		   	struct client client = {0};
+			client.id = c->id;
+			if (nclients==MAX_CLIENTS){
+				printf("Refused connection. Max client nb attained.\n");
+				// DISCONNECT !!!
+			} else {
+				clients[nclients] = client;
+			    nclients++;
+			}
 
+		break;
 
+     	case(MG_EV_READ):
+    		/* Receive from client.
+      		* When received, parse the incoming line
+	        * SUB topic/topic/...
+	        * PUB topic/topic/...
+	        */
 
-	/* Core of the server. We define a pollfd struct to hold IO sockfds
- 	* and listening socket as pfds[0]. Iterating over the struct means checking
-	* new accepts waiting on pfds[0], and checking new POLLINS on others.
-	* MAX_CO defines struct size, nfds stores the effective of connections.
-	*
-	* Two labels
-	* -> MAIN_LOOP breaks the iteration in case of adding or removing of
-	* clients which affects iteration parameters.
-	* -> REMOVE_CLIENT is jumped to in case of various errors and terminations,
-	* and jumps back to MAIN_LOOP after removal.
-	*/
+		    for (;;) {
 
-	struct pollfd pfds[MAX_CONN];
-	int nfds = 1;
-	pfds[0].fd = sockfd_listen;
-	pfds[0].events = POLLIN;
+			/* We need to split on '\n' characters, c->recv being a stream.
+			* Measure len used in received stream, then clear the used part.
+			*/
+			char *nl = memchr(c->recv.buf, '\n', c->recv.len);
+			if (nl == NULL) break;
 
-	MAIN_LOOP :
-	for(;;){
+			size_t used = (size_t) (nl - (char *) c->recv.buf) + 1;
+			char *line = (char *) c->recv.buf;
 
-		/* Main loop. 100ms timeout on polls. */
-		if (poll(pfds, nfds, 100)>0){
+			/* Parse PUB/SUB command and topic */
+			char cmd[3], topic_line[128];
+			struct topic topic = {0};
 
-			/* Handle accepts here. */
-			if (pfds[0].revents & POLLIN){
-
-				if (nfds<MAX_CONN){
-					printf("Accepting a connection.\n");
-					pfds[nfds].fd = accept(sockfd_listen, NULL, 0);
-					pfds[nfds].events = POLLIN;
-					nfds++;
-					goto MAIN_LOOP;
-
-				} else {
-					/* Refuse connection if the MAX_CONN number is attained. */
-					printf("Refusing a connection.\n");
-				    int refused = accept(sockfd_listen, NULL, NULL);
-				    if (refused != -1) {
-				        const char *msg = "ERR:server full.\n";
-				        send(refused, msg, strlen(msg), 0);   // optionnel
-				        close(refused);
-					}
-				}
+			sscanf("%s %s\n", cmd, topic_line);
+			if(strcmp(cmd, "PUB")==0){
+				/* Expecting full topic struct with action and options */
 
 			}
 
-			/* Handle IO sockets */
-			for (int i=1 ; i<nfds ; i++){
+
+			/* Clear recv buffer from used line*/
+			mg_iobuf_del(&c->recv, 0, used);
+			}
+
+		    if (c->recv.len > MAX_LINE) {                    // ligne trop longue sans '\n'
+		        printf("[conn %lu] ligne trop longue, fermeture\n", c->id);
+		        c->is_closing = 1;
+		    }
+
+		break;
+
+	    case(MG_EV_CLOSE):
+			nclients--;
+			printf("[conn %lu] fermé (%d clients)\n", c->id, nclients);
+
+		break;
+
+    }
+
+}
 
 
-				if (pfds[i].revents & POLLHUP){
-					/* Disconnected by client. */
-
-					REMOVE_CLIENT :
-					close(pfds[i].fd);
-					pfds[i] = pfds[nfds-1];
-					nfds--;
-					goto MAIN_LOOP;
-				}
+/* Initiate a mg manager, have it listen on PORT.
+ * Run main poll loop.
+ */
+int main(void) {
 
 
-				if (pfds[i].revents & POLLERR){
-					//printf("POLLER\n");
-					goto REMOVE_CLIENT;
-					exit(EXIT_FAILURE);
-				}
+    struct mg_mgr mgr;
+    mg_log_set(MG_LL_ERROR);
+    mg_mgr_init(&mgr);
 
+    mg_listen(&mgr, PORT_URL, ev_handler, NULL);
+    printf("Broker listening.\n");
 
-				if (pfds[i].revents & POLLIN){
-					//printf("Received on pfds[%d].\n", i);
-
-					char buf[BUF_SIZE];
-					if (read(pfds[i].fd, buf, BUF_SIZE)>0){
-						buf[strcspn(buf, "\n")]='\0';
-						printf("Rcv : %s\n", buf);
-
-					} else {
-						goto REMOVE_CLIENT;
-					}
-
-				} /*if POLLIN */
-
-			} /*for pfds */
-
-		} /*if poll>0 */
-
-	}
-
-	/* Cleanup */
-	for (int i=0 ; i<nfds ; i++) close(pfds[i].fd);
-	close(sockfd_listen);
-
-	return EXIT_SUCCESS;
+    mainloop:
+    for (;;) {
+    	mg_mgr_poll(&mgr, 100);
+    }
 }

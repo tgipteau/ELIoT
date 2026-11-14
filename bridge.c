@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "ressources/mongoose.h"
+#include "_ressources/mongoose.h"
 
 
 /* Http event handler.
@@ -31,14 +31,13 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data) {
 				/* Parse JSON command */
 				struct mg_str json_cmd = hm->body;
 
-				printf("%s\n", json_cmd.buf);
-
 			 	char *room = mg_json_get_str(json_cmd, "$.room");
 				char *device = mg_json_get_str(json_cmd, "$.device");
 				char *action =  mg_json_get_str(json_cmd, "$.action");
 
 				/* Format PUB transmission and send to the broker*/
-				mg_printf(broker_conn, "PUB %s/%s/%s", room, device, action);
+				printf("PUB %s/%s/%s\n", room, device, action);
+				mg_printf(broker_conn, "PUB %s/%s/%s\n", room, device, action);
 
 				/* Cleanup and OK response */
 				free(room);free(device);free(action);
@@ -62,6 +61,7 @@ int main(void){
 	 */
 
 	struct mg_mgr mgr;
+ 	mg_log_set(MG_LL_ERROR);
 	mg_mgr_init(&mgr);
 
 	/* Broker connection */
