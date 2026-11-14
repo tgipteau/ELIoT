@@ -1,41 +1,111 @@
 <!DOCTYPE html>
-
+<html lang="fr">
 <head>
-    <title>My Website</title>
-    <link rel="stylesheet" href="style.css"/>
-    <meta name="viewport" content="width=device-width, user-scalable=no">
-
+    <meta charset="UTF-8">
+    <title>ELIoT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#032e30">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 </head>
 
 <body>
 
-	<div class="container">
-		<button data-room="salon" data-device="lumiere1" data-action="toggle">
-			L1
-		</button>
-		<button data-room="cuisine" data-device="lumiere1" data-action="toggle">
-			<span class="button_top"> L2 </span>
-		</button>
-	</div>
+    <header>
+        <h1>ELIoT</h1>
+    </header>
 
+    <!-- Onglets : un bouton par pièce, data-tab = id de la section -->
+    <nav class="tabs" role="tablist">
+        <button class="tab active" role="tab" data-tab="salon">Salon</button>
+        <button class="tab" role="tab" data-tab="cuisine">Cuisine</button>
+    </nav>
+
+    <main>
+        <!-- Une section par pièce -->
+        <section id="salon" class="room" role="tabpanel">
+            <div class="grid">
+                <button class="device" data-room="salon" data-device="lumiere1" data-action="toggle">
+                    <span class="label">Lumière 1</span>
+                </button>
+                <button class="device" data-room="salon" data-device="lumiere1" data-action="toggle">
+                    <span class="label">Lumière 1</span>
+                </button>
+                <button class="device" data-room="salon" data-device="lumiere1" data-action="toggle">
+                    <span class="label">Lumière 1</span>
+                </button>
+                <button class="device" data-room="salon" data-device="lumiere1" data-action="toggle">
+                    <span class="label">Lumière 1</span>
+                </button>
+                <button class="device" data-room="salon" data-device="lumiere1" data-action="toggle">
+                    <span class="label">Lumière 1</span>
+                </button>
+                <button class="device" data-room="salon" data-device="lumiere1" data-action="toggle">
+                    <span class="label">Lumière 1</span>
+                </button>
+                <button class="device" data-room="salon" data-device="lumiere1" data-action="toggle">
+                    <span class="label">Lumière 1</span>
+                </button>
+                <button class="device" data-room="salon" data-device="lumiere1" data-action="toggle">
+                    <span class="label">Lumière 1</span>
+                </button>
+                <button class="device" data-room="salon" data-device="lumiere1" data-action="toggle">
+                    <span class="label">Lumière 1</span>
+                </button>
+                <button class="device" data-room="salon" data-device="lumiere1" data-action="toggle">
+                    <span class="label">Lumière 1</span>
+                </button>
+                <button class="device" data-room="salon" data-device="lumiere1" data-action="toggle">
+                    <span class="label">Lumière 1</span>
+                </button>
+            </div>
+        </section>
+
+        <section id="cuisine" class="room" role="tabpanel" hidden>
+            <div class="grid">
+                <button class="device" data-room="cuisine" data-device="lumiere1" data-action="toggle">
+                    <span class="label">Lumière 1</span>
+                </button>
+            </div>
+        </section>
+    </main>
 
     <script>
+        // --- Commandes : votre code, inchangé sur le fond ---
         document.querySelectorAll("button[data-room]").forEach((bouton) => {
-        bouton.addEventListener("click", () => {
-                    fetch("/cmd", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            room: bouton.dataset.room,
-                            device: bouton.dataset.device,
-                            action: bouton.dataset.action,
-                        }),
-                    });
+            bouton.addEventListener("click", () => {
+                fetch("/cmd", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        room: bouton.dataset.room,
+                        device: bouton.dataset.device,
+                        action: bouton.dataset.action,
+                    }),
                 });
             });
+        });
 
+        // --- Onglets ---
+        const onglets = document.querySelectorAll(".tab");
+        const pieces = document.querySelectorAll(".room");
+
+        function afficher(id) {
+            onglets.forEach((o) => o.classList.toggle("active", o.dataset.tab === id));
+            pieces.forEach((p) => (p.hidden = p.id !== id));
+            localStorage.setItem("onglet", id);
+        }
+
+        onglets.forEach((o) => o.addEventListener("click", () => afficher(o.dataset.tab)));
+
+        // Réouvre la dernière pièce consultée
+        const dernier = localStorage.getItem("onglet");
+        if (dernier && document.getElementById(dernier)) afficher(dernier);
     </script>
 
 </body>
-
 </html>
