@@ -3,15 +3,23 @@
 		{
 			"nom": "salon",
 			"appareils": [
-					{"nom":"led", "texte": "Led", "url":"/Led"},
-					{"nom":"veilleuse", "texte": "Veilleuse", "url": "/Veilleuse"}
+					{"nom":"led", "texte": "Led", "actions":[
+						"toggle", "on", "off"
+					]},
+					{"nom":"veilleuse", "texte": "Veilleuse", "actions":[
+						"toggle", "on", "off"
+						]}
 				]
 		},
 		{
 			"nom": "cuisine",
 		 	"appareils": [
-					{"nom":"frigo", "texte": "Frigo", "url":"/Frigo"},
-					{"nom":"lampe", "texte": "Lampe", "url": "/Lampe"}
+					{"nom":"frigo", "texte": "Frigo","actions":[
+						"toggle", "open", "close"
+						]},
+					{"nom":"lampe", "texte": "Lampe", "actions":[
+						"toggle", "on", "off"
+						]}
 				]
 		}
 	]

@@ -46,9 +46,17 @@ function show_room(idx){
 
 }
 
+function clear_ui() {
+	card.replaceChildren();                 // supprime tous les room_div
+	room_selection_div.replaceChildren();   // supprime tous les boutons de sélection
+	room_divs.length = 0;                   // vide les tableaux en conservant la référence
+	room_selectors.length = 0;
+}
+
 // Populate page based on json data sent by the server
 function run(dat) {
 
+	clear_ui();
 	const rooms = dat.rooms;
 
 	rooms.forEach((room, r_idx) => {
@@ -69,7 +77,7 @@ function run(dat) {
 
 		// create room buttons
 		for (const appareil of room.appareils) {
-			const url = `/cmd/${room.nom}/${appareil.nom}/toggle`;
+			const url = `/cmd/${room.nom}/${appareil.nom}/${appareil.actions[0]}`;
 			const button = document.createElement("button");
 			button.textContent = appareil.texte;
 			button.classList.add("device_cmd_btn")
