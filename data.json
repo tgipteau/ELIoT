@@ -1,0 +1,18 @@
+{
+	"rooms": [
+		{
+			"nom": "salon",
+			"appareils": [
+					{"nom":"led", "texte": "Led", "url":"/Led"},
+					{"nom":"veilleuse", "texte": "Veilleuse", "url": "/Veilleuse"}
+				]
+		},
+		{
+			"nom": "cuisine",
+		 	"appareils": [
+					{"nom":"frigo", "texte": "Frigo", "url":"/Frigo"},
+					{"nom":"lampe", "texte": "Lampe", "url": "/Lampe"}
+				]
+		}
+	]
+}

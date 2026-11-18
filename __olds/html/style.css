@@ -1,0 +1,159 @@
+:root {
+    --fond: #032e30;
+    --carte: #0a4a4d;
+    --accent: #f5deb3;
+    --texte: #ffffff;
+    --bord: 4px;      /* épaisseur des bordures */
+    --ombre: 6px;     /* décalage de l'ombre dure */
+}
+
+@font-face {
+    font-family: eliot_font;
+    src: url(minicomp_font.otf);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;   /* aucun arrondi, nulle part */
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--fond);
+    color: var(--texte);
+    font-family: monospace;
+    /* marges de sécurité (encoche, barre d'accueil iPhone) */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+             env(safe-area-inset-bottom) env(safe-area-inset-left);
+    -webkit-tap-highlight-color: transparent;
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+header {
+    padding: 1.2rem 1rem 0.5rem;
+    text-align: center;
+}
+
+h1 {
+	font-family: eliot_font;
+    font-size: 2rem;
+    font-weight: normal;
+    letter-spacing: 0.1em;
+}
+
+/* ---------- Onglets ---------- */
+.tabs {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem calc(0.75rem + var(--ombre));
+    overflow-x: auto;          /* défilement horizontal s'il y a beaucoup de pièces */
+    scrollbar-width: none;
+    border-bottom: var(--bord) solid var(--accent);
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+    flex: 0 0 auto;
+    padding: 0.2rem 0.6rem;
+    font: inherit;
+    font-size: 1.1rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--texte);
+    background: var(--carte);
+    border: var(--bord) solid var(--accent);
+    box-shadow: 4px 4px var(--accent);
+    cursor: pointer;
+    touch-action: manipulation;
+
+}
+
+.tab.active {
+    color: var(--fond);
+    background: var(--accent);
+    box-shadow: none;
+    transform: translate(4px, 4px);
+}
+
+/* ---------- Appareils ---------- */
+main {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 1rem 1rem calc(1rem + var(--ombre));
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 1.25rem;
+}
+
+.device {
+    aspect-ratio: 3 / 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    font: inherit;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: var(--texte);
+    background: var(--carte);
+    border: var(--bord) solid var(--accent);
+    box-shadow: var(--ombre) var(--ombre) var(--accent);
+    cursor: pointer;
+    touch-action: manipulation; /* supprime le délai et le zoom au double-tap */
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.device:active {
+    box-shadow: none;
+    transform: translate(var(--ombre), var(--ombre));
+}
+
+/* ---------- Retour d'état ---------- */
+.device::after {
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    opacity: 0.7;
+}
+
+/* état inconnu (pas encore reçu) : bouton atténué */
+.device:not([data-state]) {
+    opacity: 0.6;
+}
+
+.device[data-state="off"]::after { content: "Éteint"; }
+
+.device[data-state="on"] {
+    background: var(--accent);
+    color: var(--fond);
+    border-color: var(--texte);
+}
+.device[data-state="on"]::after {
+    content: "Allumé";
+    opacity: 0.8;
+}
+
+#hors-ligne {
+    margin: 0.5rem 1rem 0;
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #3b1d00;
+    background: #ffb74d;
+    border: var(--bord) solid #3b1d00;
+}

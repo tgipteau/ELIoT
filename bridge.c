@@ -3,6 +3,27 @@
 #include "_ressources/mongoose.h"
 
 
+/* Bridge manages JSON writing of combos and reading of rooms and devices on data.json.
+ * This function sends the data to the webpage script on GET /data_json.
+ */
+static void send_data_json(struct mg_connection *c){
+
+	struct mg_str f_content = mg_file_read(&mg_fs_posix, "data.json");
+
+	if (f_content.buf == NULL) {
+		mg_http_reply(c, 500, "Content-Type: application/json\r\n",
+	                "{\"error\":\"data.json introuvable\"}");
+		return;
+	}
+
+	printf("Sending JSON data...\n");
+	mg_http_reply(c, 200,
+	            "Content-Type: application/json\r\n"
+	            "Cache-Control: no-store\r\n",
+	            "%.*s", f_content.len, f_content.buf);
+	free(f_content.buf);
+}
+
 /* Http event handler.
  * Handle GET and POST.
  * On POST /cmd, get the command as a JSON with paths "room", "device" and "action".
@@ -17,36 +38,33 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data) {
 		struct mg_http_message *hm = (struct mg_http_message *) ev_data; /* Parse the request */
 
 		/* GET */
-		if (mg_match(hm->method, mg_str("GET"), NULL)){
-			/* Serve static files from html folder */
-		   	struct mg_http_serve_opts opts = {.root_dir = "./html", .fs = &mg_fs_posix};
-		    mg_http_serve_dir(c, hm, &opts);
+		if (mg_match(hm->method, mg_str("GET"), NULL)) {
+			if (mg_match(hm->uri, mg_str("/data_json"), NULL)) {
+				send_data_json(c);
+			} else {
+				struct mg_http_serve_opts opts = {.root_dir = "./html", .fs = &mg_fs_posix};
+				mg_http_serve_dir(c, hm, &opts);
+			}
 		}
 
 		/* POST */
 		else if (mg_match(hm->method, mg_str("POST"), NULL)){
 
-		   	if (mg_match(hm->uri, mg_str("/cmd"), NULL)) {
+		  	if (mg_match(hm->uri, mg_str("/cmd/#"), NULL)) {
+				char uri[128], room[32], device[32], action[32];
 
-				/* Parse JSON command */
-				struct mg_str json_cmd = hm->body;
+				/* Copy ended by \0 */
+				snprintf(uri, sizeof(uri), "%.*s", (int) hm->uri.len, hm->uri.buf);
 
-			 	char *room = mg_json_get_str(json_cmd, "$.room");
-				char *device = mg_json_get_str(json_cmd, "$.device");
-				char *action =  mg_json_get_str(json_cmd, "$.action");
+	  			/* Parse cmd */
+				sscanf(uri, "/cmd/%31[^/]/%31[^/]/%31[^/]", room, device, action);
 
-				/* Format PUB transmission and send to the broker*/
+				/* Send to broker */
 				printf("PUB %s/%s/%s\n", room, device, action);
 				mg_printf(broker_conn, "PUB %s/%s/%s\n", room, device, action);
 
-				/* Cleanup and OK response */
-				free(room);free(device);free(action);
-				mg_http_reply(c, 200, "", "{%m:%d}\n", MG_ESC("status"), 1);
-		    }
-		}
-
-		else {
-
+			  	mg_http_reply(c, 200, "", "{%m:%d}\n", MG_ESC("status"), 1);
+		   	}
 		}
 	}
 }
@@ -70,6 +88,7 @@ int main(void){
 
 	/* Http webserver startup */
 	mg_http_listen(&mgr, "http://192.168.1.190:8000", ev_handler, broker_conn);
+	printf("Running on http://192.168.1.190:8000\n");
 
 	/* Mainloop */
 	for(;;){

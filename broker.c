@@ -123,6 +123,8 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data) {
 					 * Iterate mg_mgr connections for clients, test subs, and
 					 * post accordingly
 					 */
+
+					printf("PUBACK : %s", line); // Debug print Line
 					for (struct mg_connection *con = c->mgr->conns; con != NULL; con = con->next) {
 					    struct client *cl = (struct client *) con->fn_data;
 						/* No PUB to NULL clients and no self-PUB */
@@ -139,6 +141,8 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data) {
 					 * Corresponding client struct is pointed at by c->fn_data
 					 * (see accept protocol)
 					 */
+
+					printf("SUBACK : %s", line);
 					struct client *cl = (struct client *) c->fn_data;
 					if (cl->nsubs<MAX_SUBS){
 						cl->subs[cl->nsubs] = topic;
@@ -148,6 +152,8 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data) {
 				}
 
 				else if (strcmp(cmd, "LST")==0) {
+
+					printf("LSTACK : %s", line);
 					/* Send back informations about subs */
 					struct client *cl = (struct client *) c->fn_data;
 					for (int i = 0 ; i<cl->nsubs ; i++){
