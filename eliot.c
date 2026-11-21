@@ -8,12 +8,11 @@
 
 #define WEBBAPP_URL "http://192.168.1.190:8000"
 #define PORT_URL   "tcp://192.168.1.190:4242"
-#define MAX_LINE   512          // taille maximale d'une ligne acceptée
+#define MAX_LINE   512
 #define MAX_SUBS 16
 #define MAX_BROKER_CLIENTS 64
 
 
-/* Define topic struct and client struct, storing its subscribed topics. */
 struct topic {
 	char room[32];
 	char device[32];
@@ -100,13 +99,11 @@ static int is_subscribed(struct client cl, struct topic t){
 /* Webapp event handler. */
 static void webapp_ev_handler(struct mg_connection *c, int ev, void *ev_data) {
 
-	/* Retrieving the broker connection from void* pointer fn_data */
-	struct mg_connection *broker_conn = (struct mg_connection*) c->fn_data;
 
 	if (ev == MG_EV_HTTP_MSG) {  /* Http request received */
 		struct mg_http_message *hm = (struct mg_http_message *) ev_data; /* Parse the request */
 
-	/* GET */
+		/* GET */
 
 		if (mg_match(hm->method, mg_str("GET"), NULL)) {
 			if (mg_match(hm->uri, mg_str("/get_json_dat"), NULL)) {
@@ -125,45 +122,23 @@ static void webapp_ev_handler(struct mg_connection *c, int ev, void *ev_data) {
 			}
 		}
 
-	/* POST */
+		/* POST */
 
 		else if (mg_match(hm->method, mg_str("POST"), NULL)){
 
-		/* HOME CMD */
+			/* HOME CMD */
 		  	if (mg_match(hm->uri, mg_str("/cmd/#"), NULL)) {
 				char uri[128], room[32], device[32], action[32];
-
 				/* Copy ended by \0 */
 				snprintf(uri, sizeof(uri), "%.*s", (int) hm->uri.len, hm->uri.buf);
-
 	  			/* Parse cmd */
 				sscanf(uri, "/cmd/%31[^/]/%31[^/]/%31[^/]", room, device, action);
-
 			  	mg_http_reply(c, 200, "", "{%m:%d}\n", MG_ESC("status"), 1);
 		   	}
 
-		/* CREATE COMBO */
+			/* CREATE COMBO */
 			if (mg_match(hm->uri, mg_str("/makecombo/"), NULL)) {
-				struct mg_str data = mg_file_read(&mg_fs_posix, "data.json");
-				int len = 0;
-				int off = mg_json_get(data, "$.combos", &len);
-
-				int i = off + len - 1; // position du ']' fermant
-				while (i > off + 1 && isspace((unsigned char) data.buf[i - 1])){
-					i--;
-				}
-				int vide = (i == off + 1);  // tableau vide : pas de virgule
-
-				char *out = mg_mprintf("%.*s%s%.*s%.*s",
-						i, data.buf,
-						vide ? "" : ",\n\t\t",
-						(int) hm->body.len, hm->body.buf,
-						(int) data.len - i, data.buf + i);
-				mg_file_write(&mg_fs_posix, "data.json", out, strlen(out));
-				mg_http_reply(c, 200, "", "ok\n");
-
-				free(out);
-				free((void *) data.buf);
+				// TODO
 			}
 		}
 	}
