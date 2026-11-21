@@ -4,7 +4,7 @@ const card = document.getElementById("card");
 const room_divs = [];
 const room_selectors = []; // même indice que room_divs
 
-async function writeButton(url) {
+async function sendCmd(url) {
 	try {
 		const req = fetch(url, {
 			method: "POST",
@@ -26,7 +26,7 @@ document.addEventListener("visibilitychange", () => {
 
 // Get data and run populating script
 async function get_dat_and_run() {
-	const response = await fetch("/data_json", {method:"GET"});
+	const response = await fetch("/get_json_dat", {method:"GET"});
 	const dat = await response.json();
 	console.log(dat);
 	run(dat)
@@ -57,6 +57,9 @@ function clear_ui() {
 	combos_div.length = 0;
 }
 
+
+
+// MAIN
 // Populate page based on json data sent by the server
 function run(dat) {
 
@@ -65,6 +68,10 @@ function run(dat) {
 	const combos = dat.combos;
 
 
+
+
+
+	// CREATE ROOM DIVS
 	rooms.forEach((room, r_idx) => {
 
 		// create room div
@@ -81,33 +88,41 @@ function run(dat) {
 		room_selectors.push(room_selector);
 		room_selector.addEventListener("click", () => show_room(r_idx));
 
-		// create room buttons
+
+		// CREATE DEVICES BUTTONS
 		for (const appareil of room.appareils) {
 			const url = `/cmd/${appareil.url}/${appareil.actions[0]}`;
 			const button = document.createElement("button");
 			button.textContent = appareil.texte;
 			button.classList.add("device_cmd_btn")
 			button.addEventListener("click", ()=>{
-				writeButton(url);
+				sendCmd(url);
 			});
 			room_div.append(button);
 		}
 		card.append(room_div);
 	});
 
-	// create combos div
+
+
+
+	// CREATE COMBOS DIV
 	for (const combo of combos) {
 		const button = document.createElement("button");
 		button.textContent = combo.texte;
 		button.classList.add("combo_btn");
 		button.addEventListener("click", () => {
 			for (const cmd of combo.urls) {
-				url = `/cmd/${cmd}`;
-				writeButton(url);
+				sendCmd(`/cmd/${cmd}`);
 			}
 		});
 		combos_div.append(button);
 	}
+
+
+	// MAKE COMBO DIV
+
+
 
 	// show first room only on startup
 	show_room(0);

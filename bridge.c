@@ -8,6 +8,7 @@
 /* Bridge manages JSON writing of combos and reading of rooms and devices on data.json.
  * This function sends the data to the webpage script on GET /data_json.
  */
+
 static void send_data_json(struct mg_connection *c){
 
 	struct mg_str f_content = mg_file_read(&mg_fs_posix, "data.json");
@@ -67,7 +68,26 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data) {
 		   	}
 
 			if (mg_match(hm->uri, mg_str("/makecombo/"), NULL)) {
-				// TODO add combo to data.json based on json received
+				struct mg_str data = mg_file_read(&mg_fs_posix, "data.json");
+				int len = 0;
+				int off = mg_json_get(data, "$.combos", &len);
+
+				int i = off + len - 1; // position du ']' fermant
+				while (i > off + 1 && isspace((unsigned char) data.buf[i - 1])){
+					i--;
+				}
+				int vide = (i == off + 1);  // tableau vide : pas de virgule
+
+				char *out = mg_mprintf("%.*s%s%.*s%.*s",
+						i, data.buf,
+						vide ? "" : ",\n\t\t",
+						(int) hm->body.len, hm->body.buf,
+						(int) data.len - i, data.buf + i);
+				mg_file_write(&mg_fs_posix, "data.json", out, strlen(out));
+				mg_http_reply(c, 200, "", "ok\n");
+
+				free(out);
+				free((void *) data.buf);
 			}
 		}
 	}
@@ -98,7 +118,7 @@ int main(void){
 		perror("Error on listening.");
 	}
 
-	printf("Running on %s\n", HOST);
+	printf("Running on %s\n", WEBBAPP_URL);
 
 	/* Mainloop */
 	for(;;){

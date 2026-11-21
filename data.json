@@ -1,32 +1,35 @@
 {
-	"rooms": [
-		{
-			"nom": "salon",
-			"appareils": [
-					{"url":"salon/led", "texte": "Led", "actions":[
-						"toggle", "on", "off"
-					]},
-					{"url":"salon/led", "texte": "Veilleuse", "actions":[
-						"toggle", "on", "off"
-						]}
-				]
-		},
-		{
-			"nom": "cuisine",
-		 	"appareils": [
-					{"url":"cuisine/frigo", "texte": "Frigo","actions":[
-						"toggle", "open", "close"
+	"home_assist": {
+		"rooms": [
+			{
+				"nom": "salon",
+				"appareils": [
+						{"url":"salon/led", "texte": "Led", "actions":[
+							"toggle", "on", "off"
 						]},
-					{"url":"cuisine/lampe", "texte": "Lampe", "actions":[
-						"toggle", "on", "off"
-						]}
-				]
-		}
-	],
+						{"url":"salon/led", "texte": "Veilleuse", "actions":[
+							"toggle", "on", "off"
+							]}
+					]
+			},
+			{
+				"nom": "cuisine",
+			 	"appareils": [
+						{"url":"cuisine/frigo", "texte": "Frigo","actions":[
+							"toggle", "open", "close"
+							]},
+						{"url":"cuisine/lampe", "texte": "Lampe", "actions":[
+							"toggle", "on", "off"
+							]}
+					]
+			}
+		],
 
-	"combos": [
-		{ "texte" : "salon soir", "urls": [
-			"salon/led/off", "salon/veilleuse/on"
-		]}
-	]
+		"combos": [
+			{ "texte" : "salon soir", "urls": [
+				"salon/led/off", "salon/veilleuse/on"
+			]}
+		]
+	}
+
 }
