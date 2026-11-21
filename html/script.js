@@ -1,4 +1,5 @@
 const room_selection_div = document.querySelector("#room_selection");
+const combos_div = document.querySelector("#combos_div");
 const card = document.getElementById("card");
 const room_divs = [];
 const room_selectors = []; // même indice que room_divs
@@ -16,6 +17,7 @@ async function writeButton(url) {
 		console.log(error);
 	}
 }
+
 
 // Reload data on reopening
 document.addEventListener("visibilitychange", () => {
@@ -49,8 +51,10 @@ function show_room(idx){
 function clear_ui() {
 	card.replaceChildren();                 // supprime tous les room_div
 	room_selection_div.replaceChildren();   // supprime tous les boutons de sélection
+	combos_div.replaceChildren();
 	room_divs.length = 0;                   // vide les tableaux en conservant la référence
 	room_selectors.length = 0;
+	combos_div.length = 0;
 }
 
 // Populate page based on json data sent by the server
@@ -58,6 +62,8 @@ function run(dat) {
 
 	clear_ui();
 	const rooms = dat.rooms;
+	const combos = dat.combos;
+
 
 	rooms.forEach((room, r_idx) => {
 
@@ -77,7 +83,7 @@ function run(dat) {
 
 		// create room buttons
 		for (const appareil of room.appareils) {
-			const url = `/cmd/${room.nom}/${appareil.nom}/${appareil.actions[0]}`;
+			const url = `/cmd/${appareil.url}/${appareil.actions[0]}`;
 			const button = document.createElement("button");
 			button.textContent = appareil.texte;
 			button.classList.add("device_cmd_btn")
@@ -87,8 +93,21 @@ function run(dat) {
 			room_div.append(button);
 		}
 		card.append(room_div);
-
 	});
+
+	// create combos div
+	for (const combo of combos) {
+		const button = document.createElement("button");
+		button.textContent = combo.texte;
+		button.classList.add("combo_btn");
+		button.addEventListener("click", () => {
+			for (const cmd of combo.urls) {
+				url = `/cmd/${cmd}`;
+				writeButton(url);
+			}
+		});
+		combos_div.append(button);
+	}
 
 	// show first room only on startup
 	show_room(0);

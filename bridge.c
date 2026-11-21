@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include "_ressources/mongoose.h"
 
+#define HOST "192.168.1.190:4242"
+#define WEBBAPP_URL "http://192.168.1.190:8000"
 
 /* Bridge manages JSON writing of combos and reading of rooms and devices on data.json.
  * This function sends the data to the webpage script on GET /data_json.
@@ -16,7 +18,6 @@ static void send_data_json(struct mg_connection *c){
 		return;
 	}
 
-	printf("Sending JSON data...\n");
 	mg_http_reply(c, 200,
 	            "Content-Type: application/json\r\n"
 	            "Cache-Control: no-store\r\n",
@@ -60,11 +61,14 @@ static void ev_handler(struct mg_connection *c, int ev, void *ev_data) {
 				sscanf(uri, "/cmd/%31[^/]/%31[^/]/%31[^/]", room, device, action);
 
 				/* Send to broker */
-				printf("PUB %s/%s/%s\n", room, device, action);
 				mg_printf(broker_conn, "PUB %s/%s/%s\n", room, device, action);
 
 			  	mg_http_reply(c, 200, "", "{%m:%d}\n", MG_ESC("status"), 1);
 		   	}
+
+			if (mg_match(hm->uri, mg_str("/makecombo/"), NULL)) {
+				// TODO add combo to data.json based on json received
+			}
 		}
 	}
 }
@@ -84,11 +88,17 @@ int main(void){
 
 	/* Broker connection */
 	struct mg_connection *broker_conn;
-	broker_conn = mg_connect(&mgr, "192.168.1.190:4242", NULL, NULL);
+	broker_conn = mg_connect(&mgr, HOST, NULL, NULL);
+	if (broker_conn==NULL){
+		perror("Error on connecting to broker.");
+	}
 
 	/* Http webserver startup */
-	mg_http_listen(&mgr, "http://192.168.1.190:8000", ev_handler, broker_conn);
-	printf("Running on http://192.168.1.190:8000\n");
+	if (mg_http_listen(&mgr, WEBBAPP_URL, ev_handler, broker_conn)==NULL){
+		perror("Error on listening.");
+	}
+
+	printf("Running on %s\n", HOST);
 
 	/* Mainloop */
 	for(;;){
