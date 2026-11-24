@@ -1,6 +1,7 @@
 const room_selection_div = document.querySelector("#room_selection");
 const combos_div = document.querySelector("#combos_div");
 const card = document.getElementById("card");
+const mkcmb_div = document.querySelector("#mkcmb_div");
 const room_divs = [];
 const room_selectors = []; // même indice que room_divs
 
@@ -52,6 +53,7 @@ function clear_ui() {
 	card.replaceChildren();                 // supprime tous les room_div
 	room_selection_div.replaceChildren();   // supprime tous les boutons de sélection
 	combos_div.replaceChildren();
+	mkcmb_div.replaceChildren();
 	room_divs.length = 0;                   // vide les tableaux en conservant la référence
 	room_selectors.length = 0;
 	combos_div.length = 0;
@@ -121,7 +123,23 @@ function run(dat) {
 
 
 	// MAKE COMBO DIV
-	mkcmb_div = document.querySelector("#mkcmb_div");
+
+	mkcmb_selectors = [];
+	selected_actions_div = document.createElement("div");
+	selected_actions_title = document.createElement("p");
+	selected_actions_title.textContent = "Selectionné";
+	selected_actions_div.append(selected_actions_title);
+	mkcmb_div.append(selected_actions_div);
+
+	function show_selected_actions() {
+		selected_actions_div.replaceChildren;
+		for (const selector in mkcmb_selectors) {
+			const selected_p = document.createElement("p");
+			selected_p.textContent = selector.value;
+			selected_actions_div.append(selected_p);
+		}
+	}
+
 	for (const room of rooms) {
 		mkcmb_room_div = document.createElement("div");
 		mkcmb_room_div.classList.add("mkcmb_room_div");
@@ -137,15 +155,18 @@ function run(dat) {
 			mkcmb_sel_action = document.createElement("select");
 			const no_opt = document.createElement("option");
 			no_opt.value = "";
-			no_opt.textContent = "------";
+			no_opt.textContent = "";
+			mkcmb_selectors.push(mkcmb_sel_action);
 			mkcmb_sel_action.append(no_opt);
 			mkcmb_device_div.append(mkcmb_device_p);
 			mkcmb_device_div.append(mkcmb_sel_action);
 
+			mkcmb_sel_action.addEventListener("change", show_selected_actions);
+
 
 			for (const action of device.actions) {
 				const mkcmb_action = document.createElement("option");
-				mkcmb_action.value = action;
+				mkcmb_action.value = device.url + "/" + action;
 				mkcmb_action.textContent = action;
 				mkcmb_sel_action.append(mkcmb_action);
 
