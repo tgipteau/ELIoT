@@ -3,11 +3,30 @@
     src: url(minicomp_font.otf);
 }
 
+.first-color {
+	background:
+}
+
+.second-color {
+	background:
+}
+
+.third-color {
+	background:
+}
+
+.fourth-color {
+	background:
+}
+
 :root {
-    --fond: #032e30;
-    --carte: #0a4a4d;
-    --accent: #f5deb3;
-    --texte: #ffffff;
+    --fond:  #feffdf;
+    --carte: #dde0ab;
+    --accent: #97cba9;
+    --grisaille:  #668ba4;
+    --texte: black;
+
+
 }
 
 html {
@@ -24,7 +43,7 @@ body {
     padding: env(safe-area-inset-top) env(safe-area-inset-right)
              env(safe-area-inset-bottom) env(safe-area-inset-left);
     -webkit-tap-highlight-color: transparent;
-    overflow: hidden;
+    overflow: scroll;
     overscroll-behavior: none;
 }
 
@@ -35,6 +54,12 @@ header {
 
 
 #title {
+	background-color: var(--grisaille);
+	border-style: outset;
+	border-radius: 12px;
+	padding: 10px;
+	color : white;
+	margin-inline: 10em;
 	font-family: eliot_font;
     font-size: 2rem;
     font-weight: normal;
@@ -42,13 +67,17 @@ header {
 }
 
 #card {
-	background-color: var(--carte);
+	background-color: var(--accent);
+	border-color: var(--carte);
+	border-radius: 99px;
+	border-style: dashed;
+	border-width: 10px;
 	margin-inline : 12em;
 	display: flex;
 }
 
 .room_div {
-	background-color: var(--fond);
+
 	margin-inline: auto;
 	margin-block: 2em;
 	justify-content: center;
@@ -64,25 +93,25 @@ button {
 	color : var(--texte);
 	font-size : 3vh;
 	margin: 1em;
-	background-color: green;
+	background-color: var(--carte);
 	box-shadow: 2px 2px 1px 1px black;
 	border-radius: 5px;
 }
 /* Push effect on click */
 button:active {
 	box-shadow: 0px 0px 0px 0px;
-	background-color: green;
+	background-color: var(--carte);
 }
 
 /* room selection buttons */
 .room_sel_btn {
-	background-color: darkslategrey;
+	background-color: var(--fond);
 	box-shadow: 4px 4px 1px 1px black;
 
 }
 
 .room_sel_btn_active {
-	background-color: green;
+	background-color: var(--carte);
 	box-shadow: 0px 0px 0px 0px;
 
 }
@@ -91,5 +120,36 @@ button:active {
 
 /* device selection buttons*/
 .device_cmd_btn{
+	background-color: var(--carte);
+}
+
+/* Combo items */
+
+.combo_btn{
+	background-color: deeppink}
+
+#mkcmb_div{
+	background-color: saddlebrown;
+	display: flex;
+	padding: 1em;
+}
+
+/* Make combos items */
+.mkcmb_room_div{
+	background-color: blue;
+	margin: 1em;
+	padding: 0.5em;
+	justify-content: space-evenly;
+}
+
+.mkcmb_device_div{
 	background-color: green;
+	margin-block: 1.5em;
+	padding: 1em;
+	display: flex;
+	justify-content: space-between;
+}
+
+select {
+
 }

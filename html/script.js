@@ -93,7 +93,7 @@ function run(dat) {
 		for (const appareil of room.appareils) {
 			const url = `/cmd/${appareil.url}/${appareil.actions[0]}`;
 			const button = document.createElement("button");
-			button.textContent = appareil.texte;
+			button.textContent = appareil.nom;
 			button.classList.add("device_cmd_btn")
 			button.addEventListener("click", ()=>{
 				sendCmd(url);
@@ -109,7 +109,7 @@ function run(dat) {
 	// CREATE COMBOS DIV
 	for (const combo of combos) {
 		const button = document.createElement("button");
-		button.textContent = combo.texte;
+		button.textContent = combo.nom;
 		button.classList.add("combo_btn");
 		button.addEventListener("click", () => {
 			for (const cmd of combo.urls) {
@@ -121,6 +121,40 @@ function run(dat) {
 
 
 	// MAKE COMBO DIV
+	mkcmb_div = document.querySelector("#mkcmb_div");
+	for (const room of rooms) {
+		mkcmb_room_div = document.createElement("div");
+		mkcmb_room_div.classList.add("mkcmb_room_div");
+		mkcmb_div.append(mkcmb_room_div);
+
+		for (const device of room.appareils) {
+			mkcmb_device_div = document.createElement("div");
+			mkcmb_device_div.classList.add("mkcmb_device_div")
+			mkcmb_room_div.append(mkcmb_device_div);
+
+			mkcmb_device_p = document.createElement("p");
+			mkcmb_device_p.textContent = device.nom;
+			mkcmb_sel_action = document.createElement("select");
+			const no_opt = document.createElement("option");
+			no_opt.value = "";
+			no_opt.textContent = "------";
+			mkcmb_sel_action.append(no_opt);
+			mkcmb_device_div.append(mkcmb_device_p);
+			mkcmb_device_div.append(mkcmb_sel_action);
+
+
+			for (const action of device.actions) {
+				const mkcmb_action = document.createElement("option");
+				mkcmb_action.value = action;
+				mkcmb_action.textContent = action;
+				mkcmb_sel_action.append(mkcmb_action);
+
+			}
+
+
+		}
+
+	}
 
 
 

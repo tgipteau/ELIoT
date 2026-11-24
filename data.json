@@ -4,10 +4,10 @@
 			{
 				"nom": "salon",
 				"appareils": [
-						{"url":"salon/led", "texte": "Led", "actions":[
+						{"url":"salon/led", "nom": "Led", "actions":[
 							"toggle", "on", "off"
 						]},
-						{"url":"salon/led", "texte": "Veilleuse", "actions":[
+						{"url":"salon/led", "nom": "Veilleuse", "actions":[
 							"toggle", "on", "off"
 							]}
 					]
@@ -15,10 +15,10 @@
 			{
 				"nom": "cuisine",
 			 	"appareils": [
-						{"url":"cuisine/frigo", "texte": "Frigo","actions":[
+						{"url":"cuisine/frigo", "nom": "Frigo","actions":[
 							"toggle", "open", "close"
 							]},
-						{"url":"cuisine/lampe", "texte": "Lampe", "actions":[
+						{"url":"cuisine/lampe", "nom": "Lampe", "actions":[
 							"toggle", "on", "off"
 							]}
 					]
@@ -26,7 +26,7 @@
 		],
 
 		"combos": [
-			{ "texte" : "salon soir", "urls": [
+			{ "nom" : "salon soir", "urls": [
 				"salon/led/off", "salon/veilleuse/on"
 			]}
 		]
